@@ -85,9 +85,10 @@
         :formatter="dateFormatter"
         width="180"
       />
-      <el-table-column label="操作" align="center" width="100" fixed="right">
+      <el-table-column label="操作" align="center" width="160" fixed="right">
         <template #default="scope">
           <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
+          <el-button link type="info" @click="viewUserDetail(scope.row.userId)">会员详情</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -127,6 +128,8 @@
 import { dateFormatter } from '@/utils/formatTime'
 import * as ResumeApi from '@/api/member/resume'
 import { getJobStatusLabel, getJobStatusTagType, formatSalaryRange } from '@/utils/recruitStatus'
+
+const router = useRouter()
 
 const loading = ref(true)
 const total = ref(0)
@@ -168,6 +171,12 @@ const resetQuery = () => {
 const openDetail = (row: any) => {
   currentResume.value = row
   detailVisible.value = true
+}
+
+const viewUserDetail = (userId: number) => {
+  if (userId) {
+    router.push({ path: `/member/user/detail/${userId}` })
+  }
 }
 
 onMounted(() => {

@@ -59,3 +59,13 @@ export const getCourseOrder = async (id: number) => {
 export const refundCourseOrder = async (id: number) => {
   return await request.put({ url: `/edu/course-order/refund?id=` + id })
 }
+
+// 导出学习记录
+export const exportStudyRecord = async (params: any) => {
+  return await request.download({ url: `/edu/study-record/export-excel`, params })
+}
+
+// 导出课程订单
+export const exportCourseOrder = async (params: any) => {
+  return await request.download({ url: `/edu/course-order/export-excel`, params })
+}

@@ -66,9 +66,10 @@
         :formatter="dateFormatter"
         width="180"
       />
-      <el-table-column label="操作" align="center" width="120" fixed="right">
+      <el-table-column label="操作" align="center" width="180" fixed="right">
         <template #default="scope">
           <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
+          <el-button link type="info" @click="viewUserDetail(scope.row.userId)">会员详情</el-button>
           <el-button
             link
             type="danger"
@@ -116,6 +117,7 @@ import * as ResumeApi from '@/api/member/resume'
 
 const message = useMessage()
 const { t } = useI18n()
+const router = useRouter()
 
 const loading = ref(true)
 const total = ref(0)
@@ -156,6 +158,12 @@ const resetQuery = () => {
 const openDetail = (row: any) => {
   currentCard.value = row
   detailVisible.value = true
+}
+
+const viewUserDetail = (userId: number) => {
+  if (userId) {
+    router.push({ path: `/member/user/detail/${userId}` })
+  }
 }
 
 const handleDelete = async (id: number) => {

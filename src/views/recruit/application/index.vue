@@ -120,6 +120,14 @@
           </el-button>
           <el-button
             link
+            type="info"
+            @click="viewResume(scope.row)"
+            v-hasPermi="['member:resume:query']"
+          >
+            查看简历
+          </el-button>
+          <el-button
+            link
             type="danger"
             @click="handleDelete(scope.row.id)"
             v-hasPermi="['recruit:application:delete']"
@@ -155,12 +163,52 @@
       <el-button @click="reviewDialogVisible = false">取 消</el-button>
     </template>
   </el-dialog>
+
+  <!-- 简历查看弹窗 -->
+  <el-dialog v-model="resumeDialogVisible" title="候选人简历" width="700px">
+    <div v-loading="resumeLoading" style="min-height: 100px">
+      <el-empty v-if="!resumeLoading && !currentResume" description="该用户暂未填写简历" />
+      <el-descriptions v-else-if="currentResume" :column="2" border>
+        <el-descriptions-item label="真实姓名">{{ currentResume.realName }}</el-descriptions-item>
+        <el-descriptions-item label="手机号">{{ currentResume.mobile }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ currentResume.email }}</el-descriptions-item>
+        <el-descriptions-item label="当前城市">{{ currentResume.currentCity }}</el-descriptions-item>
+        <el-descriptions-item label="当前职位">{{ currentResume.currentPosition }}</el-descriptions-item>
+        <el-descriptions-item label="期望薪资">
+          <span v-if="currentResume.expectedSalaryMin && currentResume.expectedSalaryMax">
+            {{ currentResume.expectedSalaryMin }}K - {{ currentResume.expectedSalaryMax }}K
+          </span>
+          <span v-else-if="currentResume.expectedSalaryMin">
+            {{ currentResume.expectedSalaryMin }}K 以上
+          </span>
+          <span v-else-if="currentResume.expectedSalaryMax">
+            {{ currentResume.expectedSalaryMax }}K 以下
+          </span>
+          <span v-else>未设置</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="期望城市">{{ currentResume.expectedCity }}</el-descriptions-item>
+        <el-descriptions-item label="期望职位">{{ currentResume.expectedPosition }}</el-descriptions-item>
+        <el-descriptions-item label="求职状态">
+          <el-tag :type="getJobStatusTagType(currentResume.jobStatus)">
+            {{ getJobStatusLabel(currentResume.jobStatus) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="工作年限">{{ currentResume.workYears }} 年</el-descriptions-item>
+        <el-descriptions-item label="技能标签" :span="2">{{ currentResume.skills }}</el-descriptions-item>
+        <el-descriptions-item label="自我介绍" :span="2">{{ currentResume.selfIntro }}</el-descriptions-item>
+      </el-descriptions>
+    </div>
+    <template #footer>
+      <el-button @click="resumeDialogVisible = false">关 闭</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts" name="RecruitApplication">
 import { dateFormatter } from '@/utils/formatTime'
 import * as ApplicationApi from '@/api/recruit/application'
-import { getApplicationStatusLabel, getApplicationStatusTagType } from '@/utils/recruitStatus'
+import * as ResumeApi from '@/api/member/resume'
+import { getApplicationStatusLabel, getApplicationStatusTagType, getJobStatusLabel, getJobStatusTagType } from '@/utils/recruitStatus'
 import download from '@/utils/download'
 
 const message = useMessage()
@@ -242,6 +290,26 @@ const handleExport = async () => {
   } catch {
   } finally {
     exportLoading.value = false
+  }
+}
+
+// 简历查看相关
+const resumeDialogVisible = ref(false)
+const resumeLoading = ref(false)
+const currentResume = ref<ResumeApi.ResumeVO | null>(null)
+
+const viewResume = async (row: any) => {
+  resumeDialogVisible.value = true
+  resumeLoading.value = true
+  currentResume.value = null
+  try {
+    const data = await ResumeApi.getResumePage({ pageNo: 1, pageSize: 1, userId: row.userId })
+    currentResume.value = data.list?.[0] || null
+  } catch {
+    message.error('获取简历失败，请稍后重试')
+    resumeDialogVisible.value = false
+  } finally {
+    resumeLoading.value = false
   }
 }
 
