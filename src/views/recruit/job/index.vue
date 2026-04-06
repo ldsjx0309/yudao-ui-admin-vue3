@@ -67,10 +67,7 @@
       </el-table-column>
       <el-table-column label="薪资范围" align="center" width="130">
         <template #default="scope">
-          <span v-if="scope.row.salaryMin || scope.row.salaryMax">
-            {{ scope.row.salaryMin }}K - {{ scope.row.salaryMax }}K
-          </span>
-          <span v-else>面议</span>
+          {{ formatSalaryRange(scope.row.salaryMin, scope.row.salaryMax) }}
         </template>
       </el-table-column>
       <el-table-column label="招聘人数" align="center" prop="headCount" width="90" />
@@ -134,6 +131,7 @@ import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
 import { dateFormatter } from '@/utils/formatTime'
 import * as JobApi from '@/api/recruit/job'
 import JobForm from './JobForm.vue'
+import { formatSalaryRange } from '@/utils/recruitStatus'
 
 const message = useMessage()
 const { t } = useI18n()

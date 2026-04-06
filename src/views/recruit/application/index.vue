@@ -67,8 +67,8 @@
       <el-table-column label="职位分类" align="center" prop="categoryName" width="120" />
       <el-table-column label="状态" align="center" prop="status" width="100">
         <template #default="scope">
-          <el-tag :type="getStatusTagType(scope.row.status)">
-            {{ getStatusLabel(scope.row.status) }}
+          <el-tag :type="getApplicationStatusTagType(scope.row.status)">
+            {{ getApplicationStatusLabel(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -151,6 +151,7 @@
 <script setup lang="ts" name="RecruitApplication">
 import { dateFormatter } from '@/utils/formatTime'
 import * as ApplicationApi from '@/api/recruit/application'
+import { getApplicationStatusLabel, getApplicationStatusTagType } from '@/utils/recruitStatus'
 
 const message = useMessage()
 const { t } = useI18n()
@@ -169,26 +170,6 @@ const queryParams = reactive({
   createTime: [] as string[]
 })
 const queryFormRef = ref()
-
-const getStatusLabel = (status: number) => {
-  const map: Record<number, string> = {
-    0: '待审核',
-    1: '已通过',
-    2: '已拒绝',
-    3: '已邀约'
-  }
-  return map[status] || '未知'
-}
-
-const getStatusTagType = (status: number): string => {
-  const map: Record<number, string> = {
-    0: 'warning',
-    1: 'success',
-    2: 'danger',
-    3: 'primary'
-  }
-  return map[status] || 'info'
-}
 
 const getList = async () => {
   loading.value = true

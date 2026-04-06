@@ -60,6 +60,15 @@
           <el-tab-pane label="推广用户" lazy>
             <UserBrokerageList :bind-user-id="id" />
           </el-tab-pane>
+          <el-tab-pane label="学习记录" lazy>
+            <UserStudyRecordList :user-id="id" />
+          </el-tab-pane>
+          <el-tab-pane label="我的简历" lazy>
+            <UserResumeInfo :user-id="id" />
+          </el-tab-pane>
+          <el-tab-pane label="投递记录" lazy>
+            <UserApplicationList :user-id="id" />
+          </el-tab-pane>
         </el-tabs>
       </el-card>
     </el-row>
@@ -85,6 +94,9 @@ import UserSignList from './UserSignList.vue'
 import UserFavoriteList from './UserFavoriteList.vue'
 import UserAfterSaleList from './UserAftersaleList.vue'
 import UserBalanceList from './UserBalanceList.vue'
+import UserStudyRecordList from './UserStudyRecordList.vue'
+import UserResumeInfo from './UserResumeInfo.vue'
+import UserApplicationList from './UserApplicationList.vue'
 import { CardTitle } from '@/components/Card/index'
 import { ElMessage } from 'element-plus'
 

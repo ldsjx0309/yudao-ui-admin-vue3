@@ -695,6 +695,27 @@ const remainingRouter: AppRouteRecordRaw[] = [
     ]
   },
   {
+    path: '/edu',
+    component: Layout,
+    name: 'EduModule',
+    meta: {
+      hidden: true
+    },
+    children: [
+      {
+        path: 'course/:courseId/chapter',
+        name: 'EduCourseChapter',
+        component: () => import('@/views/edu/chapter/index.vue'),
+        meta: {
+          title: '课程章节管理',
+          noCache: true,
+          hidden: true,
+          activeMenu: '/edu/course'
+        }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/Error/404.vue'),
     name: '',

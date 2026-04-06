@@ -68,15 +68,12 @@
       <el-table-column label="当前职位" align="center" prop="currentPosition" min-width="120" />
       <el-table-column label="期望薪资" align="center" width="140">
         <template #default="scope">
-          <span v-if="scope.row.expectedSalaryMin || scope.row.expectedSalaryMax">
-            {{ scope.row.expectedSalaryMin }}K - {{ scope.row.expectedSalaryMax }}K
-          </span>
-          <span v-else class="text-gray-400">未设置</span>
+          {{ formatSalaryRange(scope.row.expectedSalaryMin, scope.row.expectedSalaryMax) }}
         </template>
       </el-table-column>
       <el-table-column label="求职状态" align="center" prop="jobStatus" width="130">
         <template #default="scope">
-          <el-tag :type="getJobStatusType(scope.row.jobStatus)" size="small">
+          <el-tag :type="getJobStatusTagType(scope.row.jobStatus)" size="small">
             {{ getJobStatusLabel(scope.row.jobStatus) }}
           </el-tag>
         </template>
@@ -113,10 +110,7 @@
       <el-descriptions-item label="当前城市">{{ currentResume?.currentCity }}</el-descriptions-item>
       <el-descriptions-item label="当前职位">{{ currentResume?.currentPosition }}</el-descriptions-item>
       <el-descriptions-item label="期望薪资">
-        <span v-if="currentResume?.expectedSalaryMin || currentResume?.expectedSalaryMax">
-          {{ currentResume?.expectedSalaryMin }}K - {{ currentResume?.expectedSalaryMax }}K
-        </span>
-        <span v-else>未设置</span>
+        {{ formatSalaryRange(currentResume?.expectedSalaryMin, currentResume?.expectedSalaryMax) }}
       </el-descriptions-item>
       <el-descriptions-item label="期望城市">{{ currentResume?.expectedCity }}</el-descriptions-item>
       <el-descriptions-item label="期望职位">{{ currentResume?.expectedPosition }}</el-descriptions-item>
@@ -132,6 +126,7 @@
 <script setup lang="ts" name="MemberResume">
 import { dateFormatter } from '@/utils/formatTime'
 import * as ResumeApi from '@/api/member/resume'
+import { getJobStatusLabel, getJobStatusTagType, formatSalaryRange } from '@/utils/recruitStatus'
 
 const loading = ref(true)
 const total = ref(0)
@@ -148,21 +143,6 @@ const queryFormRef = ref()
 
 const detailVisible = ref(false)
 const currentResume = ref<any>(null)
-
-const getJobStatusLabel = (status?: number) => {
-  const map: Record<number, string> = {
-    0: '在职，随时到岗',
-    1: '在职，考虑机会',
-    2: '离职，随时到岗',
-    3: '暂不考虑'
-  }
-  return status !== undefined ? map[status] || '未知' : '-'
-}
-
-const getJobStatusType = (status: number): string => {
-  const map: Record<number, string> = { 0: 'success', 1: 'warning', 2: 'danger', 3: 'info' }
-  return map[status] || 'info'
-}
 
 const getList = async () => {
   loading.value = true
