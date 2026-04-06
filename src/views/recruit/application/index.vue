@@ -53,6 +53,15 @@
       <el-form-item>
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
+        <el-button
+          type="success"
+          plain
+          @click="handleExport"
+          :loading="exportLoading"
+          v-hasPermi="['recruit:application:export']"
+        >
+          <Icon icon="ep:download" class="mr-5px" /> 导出
+        </el-button>
       </el-form-item>
     </el-form>
   </ContentWrap>
@@ -152,12 +161,14 @@
 import { dateFormatter } from '@/utils/formatTime'
 import * as ApplicationApi from '@/api/recruit/application'
 import { getApplicationStatusLabel, getApplicationStatusTagType } from '@/utils/recruitStatus'
+import download from '@/utils/download'
 
 const message = useMessage()
 const { t } = useI18n()
 const route = useRoute()
 
 const loading = ref(true)
+const exportLoading = ref(false)
 const total = ref(0)
 const list = ref<any[]>([])
 const queryParams = reactive({
@@ -220,6 +231,18 @@ const handleDelete = async (id: number) => {
     message.success(t('common.delSuccess'))
     await getList()
   } catch {}
+}
+
+const handleExport = async () => {
+  try {
+    await message.exportConfirm()
+    exportLoading.value = true
+    const data = await ApplicationApi.exportApplication(queryParams)
+    download.excel(data, '投递记录.xls')
+  } catch {
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 onMounted(() => {
