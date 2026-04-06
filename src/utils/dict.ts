@@ -250,5 +250,15 @@ export enum DICT_TYPE {
   IOT_OTA_TASK_STATUS = 'iot_ota_task_status', // IoT OTA 任务状态
   IOT_OTA_TASK_RECORD_STATUS = 'iot_ota_task_record_status', // IoT OTA 记录状态
   IOT_MODBUS_MODE = 'iot_modbus_mode', // IoT Modbus 工作模式
-  IOT_MODBUS_FRAME_FORMAT = 'iot_modbus_frame_format' // IoT Modbus 帧格式
+  IOT_MODBUS_FRAME_FORMAT = 'iot_modbus_frame_format', // IoT Modbus 帧格式
+
+  // ========== EDU - 课程教育模块 ==========
+  EDU_COURSE_TYPE = 'edu_course_type', // 课程类型
+  EDU_COURSE_STATUS = 'edu_course_status', // 课程状态
+  EDU_EDUCATION = 'edu_education', // 学历要求
+
+  // ========== RECRUIT - 招聘模块 ==========
+  RECRUIT_JOB_STATUS = 'recruit_job_status', // 职位状态
+  RECRUIT_APPLICATION_STATUS = 'recruit_application_status', // 投递状态
+  RECRUIT_JOB_STATUS_JOB = 'recruit_job_status_job' // 求职状态
 }
