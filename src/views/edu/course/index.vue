@@ -94,9 +94,15 @@
         </template>
       </el-table-column>
       <el-table-column label="学习人数" align="center" prop="studyCount" width="90" />
-      <el-table-column label="状态" align="center" prop="status" width="90">
+      <el-table-column label="状态" align="center" prop="status" width="100">
         <template #default="scope">
-          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
+          <el-switch
+            v-model="scope.row.status"
+            :active-value="0"
+            :inactive-value="1"
+            @change="handleStatusChange(scope.row)"
+            v-hasPermi="['edu:course:update']"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -200,6 +206,16 @@ const openForm = (type: string, id?: number) => {
 
 const handleChapter = (courseId: number) => {
   router.push({ path: `/edu/course/${courseId}/chapter` })
+}
+
+const handleStatusChange = async (row: any) => {
+  try {
+    await CourseApi.updateCourseStatus(row.id, row.status)
+    message.success('状态修改成功')
+  } catch {
+    // 恢复原状态
+    row.status = row.status === 0 ? 1 : 0
+  }
 }
 
 const handleDelete = async (id: number) => {

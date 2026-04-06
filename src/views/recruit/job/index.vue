@@ -72,9 +72,15 @@
       </el-table-column>
       <el-table-column label="招聘人数" align="center" prop="headCount" width="90" />
       <el-table-column label="投递人数" align="center" prop="applicantCount" width="90" />
-      <el-table-column label="状态" align="center" prop="status" width="90">
+      <el-table-column label="状态" align="center" prop="status" width="100">
         <template #default="scope">
-          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
+          <el-switch
+            v-model="scope.row.status"
+            :active-value="0"
+            :inactive-value="1"
+            @change="handleStatusChange(scope.row)"
+            v-hasPermi="['recruit:job:update']"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -186,6 +192,15 @@ const handleDelete = async (id: number) => {
     message.success(t('common.delSuccess'))
     await getList()
   } catch {}
+}
+
+const handleStatusChange = async (row: any) => {
+  try {
+    await JobApi.updateJobStatus(row.id, row.status)
+    message.success('状态修改成功')
+  } catch {
+    row.status = row.status === 0 ? 1 : 0
+  }
 }
 
 onMounted(() => {
