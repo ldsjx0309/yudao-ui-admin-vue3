@@ -97,6 +97,20 @@
         :formatter="dateFormatter"
         width="180"
       />
+      <el-table-column label="操作" align="center" width="160" fixed="right">
+        <template #default="scope">
+          <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
+          <el-button
+            v-if="scope.row.payStatus"
+            link
+            type="warning"
+            @click="handleRefund(scope.row.id)"
+            v-hasPermi="['edu:course-order:update']"
+          >
+            退款
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
     <!-- 分页 -->
     <Pagination
@@ -106,11 +120,37 @@
       @pagination="getList"
     />
   </ContentWrap>
+
+  <!-- 订单详情弹窗 -->
+  <el-dialog v-model="detailVisible" title="订单详情" width="500px">
+    <el-descriptions :column="2" border>
+      <el-descriptions-item label="订单号" :span="2">{{ currentOrder?.no }}</el-descriptions-item>
+      <el-descriptions-item label="用户昵称">{{ currentOrder?.userNickname }}</el-descriptions-item>
+      <el-descriptions-item label="课程名称">{{ currentOrder?.courseName }}</el-descriptions-item>
+      <el-descriptions-item label="支付金额">
+        ¥{{ currentOrder?.price ? (currentOrder.price / 100).toFixed(2) : '0.00' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="支付状态">
+        <el-tag :type="currentOrder?.payStatus ? 'success' : 'warning'">
+          {{ currentOrder?.payStatus ? '已支付' : '未支付' }}
+        </el-tag>
+      </el-descriptions-item>
+      <el-descriptions-item label="支付时间">
+        {{ currentOrder?.payTime ? formatDate(currentOrder.payTime) : '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="创建时间">
+        {{ currentOrder?.createTime ? formatDate(currentOrder.createTime) : '-' }}
+      </el-descriptions-item>
+    </el-descriptions>
+  </el-dialog>
 </template>
 
 <script setup lang="ts" name="EduCourseOrder">
-import { dateFormatter } from '@/utils/formatTime'
+import { dateFormatter, formatDate } from '@/utils/formatTime'
 import * as RecordApi from '@/api/edu/record'
+
+const message = useMessage()
+const { t } = useI18n()
 
 const loading = ref(true)
 const total = ref(0)
@@ -125,6 +165,23 @@ const queryParams = reactive({
   createTime: []
 })
 const queryFormRef = ref()
+
+const detailVisible = ref(false)
+const currentOrder = ref<any>(null)
+
+const openDetail = (row: any) => {
+  currentOrder.value = row
+  detailVisible.value = true
+}
+
+const handleRefund = async (id: number) => {
+  try {
+    await message.confirm('确认要对该订单进行退款操作吗？')
+    await RecordApi.refundCourseOrder(id)
+    message.success('退款成功')
+    await getList()
+  } catch {}
+}
 
 const getList = async () => {
   loading.value = true
