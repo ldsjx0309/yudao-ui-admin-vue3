@@ -127,7 +127,7 @@
         <template #default="scope">
           <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
           <el-button
-            v-if="scope.row.payOrderId || scope.row.merchantOrderId"
+            v-if="canOpenPayOrder(scope.row)"
             link
             type="primary"
             @click="openPayOrder(scope.row)"
@@ -135,7 +135,7 @@
             支付单
           </el-button>
           <el-button
-            v-if="scope.row.payStatus"
+            v-if="scope.row.payStatus === true"
             link
             type="primary"
             @click="openStudyRecord(scope.row)"
@@ -143,7 +143,7 @@
             学习记录
           </el-button>
           <el-button
-            v-if="scope.row.payStatus"
+            v-if="scope.row.payStatus === true"
             link
             type="warning"
             @click="handleRefund(scope.row.id)"
@@ -293,9 +293,11 @@ const openDetail = async (row: RecordApi.CourseOrderVO) => {
   }
 }
 
+const canOpenPayOrder = (row: RecordApi.CourseOrderVO) => !!(row.payOrderId || row.merchantOrderId)
+
 const openPayOrder = (row: RecordApi.CourseOrderVO) => {
   if (row.payOrderId) {
-    payOrderDetailRef.value.open(row.payOrderId)
+    payOrderDetailRef.value?.open(row.payOrderId)
     return
   }
   if (row.merchantOrderId) {
