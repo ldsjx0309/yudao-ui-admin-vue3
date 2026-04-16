@@ -224,11 +224,22 @@ const queryParams = reactive({
   pageSize: 10,
   userNickname: undefined as string | undefined,
   jobName: undefined as string | undefined,
-  jobId: route.query.jobId ? Number(route.query.jobId) : undefined,
+  jobId: undefined as number | undefined,
   status: undefined as number | undefined,
   createTime: [] as string[]
 })
 const queryFormRef = ref()
+
+const initQueryParams = () => {
+  const jobId = Array.isArray(route.query.jobId) ? route.query.jobId[0] : route.query.jobId
+  queryParams.jobId = jobId ? Number(jobId) : undefined
+}
+
+const syncRouteQuery = () => {
+  initQueryParams()
+  queryParams.pageNo = 1
+  getList()
+}
 
 const getList = async () => {
   loading.value = true
@@ -313,7 +324,11 @@ const viewResume = async (row: any) => {
   }
 }
 
-onMounted(() => {
-  getList()
-})
+watch(
+  () => route.fullPath,
+  () => {
+    syncRouteQuery()
+  },
+  { immediate: true }
+)
 </script>

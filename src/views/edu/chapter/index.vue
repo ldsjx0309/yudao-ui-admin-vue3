@@ -168,7 +168,7 @@ const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
 
-const courseId = Number(route.params.courseId)
+const courseId = computed(() => Number(route.params.courseId))
 const courseName = ref('')
 const loading = ref(false)
 const chapterList = ref<any[]>([])
@@ -183,7 +183,7 @@ const formatDuration = (seconds: number) => {
 const loadChapters = async () => {
   loading.value = true
   try {
-    const chapters = await ChapterApi.getChapterList(courseId)
+    const chapters = await ChapterApi.getChapterList(courseId.value)
     // load sections for each chapter
     for (const chapter of chapters) {
       chapter.sections = await ChapterApi.getSectionList(chapter.id)
@@ -199,7 +199,7 @@ const loadChapters = async () => {
 const chapterDialogVisible = ref(false)
 const chapterDialogTitle = ref('')
 const chapterFormType = ref('')
-const chapterForm = ref({ id: undefined as number | undefined, courseId, name: '', sort: 0 })
+const chapterForm = ref({ id: undefined as number | undefined, courseId: courseId.value, name: '', sort: 0 })
 const chapterFormRules = { name: [{ required: true, message: '章节名称不能为空', trigger: 'blur' }] }
 const chapterFormRef = ref()
 
@@ -208,7 +208,7 @@ const openChapterForm = (type: string, id?: number) => {
   chapterDialogTitle.value = type === 'create' ? '添加章节' : '编辑章节'
   chapterFormType.value = type
   if (type === 'create') {
-    chapterForm.value = { id: undefined, courseId, name: '', sort: 0 }
+    chapterForm.value = { id: undefined, courseId: courseId.value, name: '', sort: 0 }
   } else if (id) {
     const chapter = chapterList.value.find((c) => c.id === id)
     if (chapter) chapterForm.value = { ...chapter }
@@ -247,7 +247,7 @@ const sectionFormType = ref('')
 const sectionForm = ref({
   id: undefined as number | undefined,
   chapterId: 0,
-  courseId,
+  courseId: courseId.value,
   name: '',
   videoUrl: '',
   duration: 0,
@@ -265,7 +265,7 @@ const openSectionForm = (type: string, chapterId: number, sectionId?: number) =>
     sectionForm.value = {
       id: undefined,
       chapterId,
-      courseId,
+      courseId: courseId.value,
       name: '',
       videoUrl: '',
       duration: 0,
@@ -277,6 +277,35 @@ const openSectionForm = (type: string, chapterId: number, sectionId?: number) =>
     const section = chapter?.sections?.find((s: any) => s.id === sectionId)
     if (section) sectionForm.value = { ...section }
   }
+}
+
+const syncCourseData = async () => {
+  chapterDialogVisible.value = false
+  sectionDialogVisible.value = false
+  chapterList.value = []
+  activeChapters.value = []
+  chapterForm.value = { id: undefined, courseId: courseId.value, name: '', sort: 0 }
+  sectionForm.value = {
+    id: undefined,
+    chapterId: 0,
+    courseId: courseId.value,
+    name: '',
+    videoUrl: '',
+    duration: 0,
+    sort: 0,
+    freeFlag: false
+  }
+  if (!courseId.value) {
+    courseName.value = ''
+    return
+  }
+  try {
+    const course = await CourseApi.getCourse(courseId.value)
+    courseName.value = course?.name || ''
+  } catch {
+    courseName.value = ''
+  }
+  await loadChapters()
 }
 
 const submitSectionForm = async () => {
@@ -304,11 +333,11 @@ const handleDeleteSection = async (id: number) => {
   } catch {}
 }
 
-onMounted(async () => {
-  try {
-    const course = await CourseApi.getCourse(courseId)
-    courseName.value = course?.name || ''
-  } catch {}
-  await loadChapters()
-})
+watch(
+  () => route.params.courseId,
+  async () => {
+    await syncCourseData()
+  },
+  { immediate: true }
+)
 </script>

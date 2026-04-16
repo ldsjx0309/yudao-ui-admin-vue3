@@ -23,13 +23,11 @@
           <UserAccountInfo :user="user" :wallet="wallet" />
         </el-card>
       </el-col>
-      <!-- 下边：账户明细 -->
-      <!-- TODO 芋艿：【订单管理】【售后管理】【收藏记录】-->
-      <el-card header="账户明细" shadow="never" style="width: 100%; margin-top: 20px">
-        <template #header>
-          <CardTitle title="账户明细" />
-        </template>
-        <el-tabs>
+        <el-card header="账户明细" shadow="never" style="width: 100%; margin-top: 20px">
+          <template #header>
+            <CardTitle title="账户明细" />
+          </template>
+          <el-tabs :key="tabKey">
           <el-tab-pane label="积分">
             <UserPointList :user-id="id" />
           </el-tab-pane>
@@ -104,11 +102,12 @@ defineOptions({ name: 'MemberDetail' })
 
 const loading = ref(true) // 加载中
 const user = ref<UserApi.UserVO>({} as UserApi.UserVO)
+const tabKey = ref(0)
 
 /** 添加/修改操作 */
 const formRef = ref()
 const openForm = (type: string) => {
-  formRef.value.open(type, id)
+  formRef.value.open(type, id.value)
 }
 
 /** 获得用户 */
@@ -125,7 +124,7 @@ const getUserData = async (id: number) => {
 const { currentRoute } = useRouter() // 路由
 const { delView } = useTagsViewStore() // 视图操作
 const route = useRoute()
-const id = route.params.id
+const id = computed(() => Number(route.params.id))
 /* 用户钱包相关信息 */
 const WALLET_INIT_DATA = {
   balance: 0,
@@ -136,23 +135,31 @@ const wallet = ref<WalletApi.WalletVO>(WALLET_INIT_DATA) // 钱包信息
 
 /** 查询用户钱包信息 */
 const getUserWallet = async () => {
-  if (!id) {
+  if (!id.value) {
     wallet.value = WALLET_INIT_DATA
     return
   }
-  const params = { userId: id }
+  const params = { userId: id.value }
   wallet.value = (await WalletApi.getWallet(params)) || WALLET_INIT_DATA
 }
 
-onMounted(() => {
-  if (!id) {
+const syncUserDetail = async () => {
+  if (!id.value) {
     ElMessage.warning('参数错误，会员编号不能为空！')
     delView(unref(currentRoute))
     return
   }
-  getUserData(id)
-  getUserWallet()
-})
+  await Promise.all([getUserData(id.value), getUserWallet()])
+  tabKey.value += 1
+}
+
+watch(
+  () => route.params.id,
+  async () => {
+    await syncUserDetail()
+  },
+  { immediate: true }
+)
 </script>
 <style lang="css" scoped>
 .detail-info-item:first-child {
