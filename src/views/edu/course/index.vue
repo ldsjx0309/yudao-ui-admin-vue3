@@ -130,6 +130,8 @@
           >
             章节
           </el-button>
+          <el-button link type="primary" @click="handleCourseOrder(scope.row)">订单</el-button>
+          <el-button link type="primary" @click="handleStudyRecord(scope.row)">学习</el-button>
           <el-button
             link
             type="danger"
@@ -206,6 +208,26 @@ const openForm = (type: string, id?: number) => {
 
 const handleChapter = (courseId: number) => {
   router.push({ path: `/edu/course/${courseId}/chapter` })
+}
+
+const handleCourseOrder = (row: any) => {
+  router.push({
+    path: '/edu/course-order',
+    query: {
+      courseId: row.id,
+      courseName: row.name
+    }
+  })
+}
+
+const handleStudyRecord = (row: any) => {
+  router.push({
+    path: '/edu/study-record',
+    query: {
+      courseId: row.id,
+      courseName: row.name
+    }
+  })
 }
 
 const handleStatusChange = async (row: any) => {

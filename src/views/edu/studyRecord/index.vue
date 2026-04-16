@@ -26,6 +26,22 @@
           class="!w-240px"
         />
       </el-form-item>
+      <el-form-item label="课程" prop="courseId">
+        <el-select
+          v-model="queryParams.courseId"
+          placeholder="请选择课程"
+          clearable
+          filterable
+          class="!w-240px"
+        >
+          <el-option
+            v-for="item in courseList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id!"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="学习时间" prop="createTime">
         <el-date-picker
           v-model="queryParams.createTime"
@@ -89,23 +105,48 @@
 
 <script setup lang="ts" name="EduStudyRecord">
 import { dateFormatter } from '@/utils/formatTime'
+import * as CourseApi from '@/api/edu/course'
 import * as RecordApi from '@/api/edu/record'
 import download from '@/utils/download'
 
 const message = useMessage()
+const route = useRoute()
 const exportLoading = ref(false)
 
 const loading = ref(true)
 const total = ref(0)
-const list = ref<any[]>([])
+const list = ref<RecordApi.StudyRecordVO[]>([])
+const courseList = ref<Array<{ id: number; name: string }>>([])
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
-  userNickname: undefined,
-  courseName: undefined,
+  userId: undefined as number | undefined,
+  userNickname: undefined as string | undefined,
+  courseId: undefined as number | undefined,
+  courseName: undefined as string | undefined,
   createTime: []
 })
 const queryFormRef = ref()
+
+const parseQueryNumber = (value: unknown) => {
+  const target = Array.isArray(value) ? value[0] : value
+  if (target === undefined || target === null || target === '') {
+    return undefined
+  }
+  const numberValue = Number(target)
+  return Number.isNaN(numberValue) ? undefined : numberValue
+}
+
+const initQueryParams = () => {
+  queryParams.userId = parseQueryNumber(route.query.userId)
+  queryParams.courseId = parseQueryNumber(route.query.courseId)
+  queryParams.userNickname = (
+    Array.isArray(route.query.userNickname) ? route.query.userNickname[0] : route.query.userNickname
+  ) as string | undefined
+  queryParams.courseName = (
+    Array.isArray(route.query.courseName) ? route.query.courseName[0] : route.query.courseName
+  ) as string | undefined
+}
 
 const getList = async () => {
   loading.value = true
@@ -140,7 +181,14 @@ const handleExport = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  initQueryParams()
+  courseList.value = (await CourseApi.getSimpleCourseList())
+    .filter((item) => item.id !== undefined && !!item.name)
+    .map((item) => ({
+      id: item.id!,
+      name: item.name
+    }))
   getList()
 })
 </script>

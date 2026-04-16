@@ -35,6 +35,22 @@
           class="!w-240px"
         />
       </el-form-item>
+      <el-form-item label="课程" prop="courseId">
+        <el-select
+          v-model="queryParams.courseId"
+          placeholder="请选择课程"
+          clearable
+          filterable
+          class="!w-240px"
+        >
+          <el-option
+            v-for="item in courseList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id!"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="支付状态" prop="payStatus">
         <el-select
           v-model="queryParams.payStatus"
@@ -80,6 +96,7 @@
       <el-table-column label="订单号" align="center" prop="no" min-width="160" />
       <el-table-column label="用户昵称" align="center" prop="userNickname" width="120" />
       <el-table-column label="课程名称" align="center" prop="courseName" min-width="150" />
+      <el-table-column label="商户单号" align="center" prop="merchantOrderId" min-width="160" />
       <el-table-column label="价格(元)" align="center" prop="price" width="100">
         <template #default="scope">
           ¥{{ scope.row.price ? (scope.row.price / 100).toFixed(2) : '0.00' }}
@@ -106,9 +123,25 @@
         :formatter="dateFormatter"
         width="180"
       />
-      <el-table-column label="操作" align="center" width="160" fixed="right">
+      <el-table-column label="操作" align="center" width="240" fixed="right">
         <template #default="scope">
           <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
+          <el-button
+            v-if="scope.row.payOrderId || scope.row.merchantOrderId"
+            link
+            type="primary"
+            @click="openPayOrder(scope.row)"
+          >
+            支付单
+          </el-button>
+          <el-button
+            v-if="scope.row.payStatus"
+            link
+            type="primary"
+            @click="openStudyRecord(scope.row)"
+          >
+            学习记录
+          </el-button>
           <el-button
             v-if="scope.row.payStatus"
             link
@@ -132,10 +165,22 @@
 
   <!-- 订单详情弹窗 -->
   <el-dialog v-model="detailVisible" title="订单详情" width="500px">
-    <el-descriptions :column="2" border>
-      <el-descriptions-item label="订单号" :span="2">{{ currentOrder?.no }}</el-descriptions-item>
-      <el-descriptions-item label="用户昵称">{{ currentOrder?.userNickname }}</el-descriptions-item>
-      <el-descriptions-item label="课程名称">{{ currentOrder?.courseName }}</el-descriptions-item>
+    <el-descriptions :column="2" border v-loading="detailLoading">
+      <el-descriptions-item label="订单号" :span="2">{{
+        currentOrder?.no || '-'
+      }}</el-descriptions-item>
+      <el-descriptions-item label="商户单号">
+        {{ currentOrder?.merchantOrderId || '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="支付单号">
+        {{ currentOrder?.payOrderNo || currentOrder?.payOrderId || '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="用户昵称">{{
+        currentOrder?.userNickname || '-'
+      }}</el-descriptions-item>
+      <el-descriptions-item label="课程名称">{{
+        currentOrder?.courseName || '-'
+      }}</el-descriptions-item>
       <el-descriptions-item label="支付金额">
         ¥{{ currentOrder?.price ? (currentOrder.price / 100).toFixed(2) : '0.00' }}
       </el-descriptions-item>
@@ -144,45 +189,129 @@
           {{ currentOrder?.payStatus ? '已支付' : '未支付' }}
         </el-tag>
       </el-descriptions-item>
+      <el-descriptions-item label="订单状态">
+        {{ currentOrder?.statusName ?? currentOrder?.status ?? '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="授权状态">
+        {{ currentOrder?.accessStatusName ?? currentOrder?.accessStatus ?? '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="有效天数">
+        {{
+          currentOrder?.validDays === undefined
+            ? '-'
+            : currentOrder.validDays === 0
+              ? '永久有效'
+              : `${currentOrder.validDays} 天`
+        }}
+      </el-descriptions-item>
+      <el-descriptions-item label="有效期截止">
+        {{ currentOrder?.validEndTime ? formatDate(currentOrder.validEndTime) : '-' }}
+      </el-descriptions-item>
       <el-descriptions-item label="支付时间">
         {{ currentOrder?.payTime ? formatDate(currentOrder.payTime) : '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="退款时间">
+        {{ currentOrder?.refundTime ? formatDate(currentOrder.refundTime) : '-' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="退款金额">
+        ¥{{ currentOrder?.refundPrice ? (currentOrder.refundPrice / 100).toFixed(2) : '0.00' }}
       </el-descriptions-item>
       <el-descriptions-item label="创建时间">
         {{ currentOrder?.createTime ? formatDate(currentOrder.createTime) : '-' }}
       </el-descriptions-item>
     </el-descriptions>
   </el-dialog>
+
+  <PayOrderDetail ref="payOrderDetailRef" />
 </template>
 
 <script setup lang="ts" name="EduCourseOrder">
 import { dateFormatter, formatDate } from '@/utils/formatTime'
+import * as CourseApi from '@/api/edu/course'
 import * as RecordApi from '@/api/edu/record'
 import download from '@/utils/download'
+import PayOrderDetail from '@/views/pay/order/OrderDetail.vue'
 
 const message = useMessage()
-const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const exportLoading = ref(false)
 
 const loading = ref(true)
 const total = ref(0)
-const list = ref<any[]>([])
+const list = ref<RecordApi.CourseOrderVO[]>([])
+const courseList = ref<Array<{ id: number; name: string }>>([])
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
+  courseId: undefined as number | undefined,
   no: undefined,
-  userNickname: undefined,
-  courseName: undefined,
-  payStatus: undefined,
+  userNickname: undefined as string | undefined,
+  courseName: undefined as string | undefined,
+  payStatus: undefined as boolean | undefined,
   createTime: []
 })
 const queryFormRef = ref()
 
 const detailVisible = ref(false)
-const currentOrder = ref<any>(null)
+const detailLoading = ref(false)
+const currentOrder = ref<RecordApi.CourseOrderVO | null>(null)
+const payOrderDetailRef = ref()
 
-const openDetail = (row: any) => {
-  currentOrder.value = row
+const parseQueryNumber = (value: unknown) => {
+  const target = Array.isArray(value) ? value[0] : value
+  if (target === undefined || target === null || target === '') {
+    return undefined
+  }
+  const numberValue = Number(target)
+  return Number.isNaN(numberValue) ? undefined : numberValue
+}
+
+const initQueryParams = () => {
+  queryParams.courseId = parseQueryNumber(route.query.courseId)
+  queryParams.courseName = (
+    Array.isArray(route.query.courseName) ? route.query.courseName[0] : route.query.courseName
+  ) as string | undefined
+  queryParams.userNickname = (
+    Array.isArray(route.query.userNickname) ? route.query.userNickname[0] : route.query.userNickname
+  ) as string | undefined
+}
+
+const openDetail = async (row: RecordApi.CourseOrderVO) => {
   detailVisible.value = true
+  detailLoading.value = true
+  try {
+    currentOrder.value = await RecordApi.getCourseOrder(row.id!)
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+const openPayOrder = (row: RecordApi.CourseOrderVO) => {
+  if (row.payOrderId) {
+    payOrderDetailRef.value.open(row.payOrderId)
+    return
+  }
+  if (row.merchantOrderId) {
+    router.push({
+      path: '/pay/order',
+      query: {
+        merchantOrderId: row.merchantOrderId
+      }
+    })
+  }
+}
+
+const openStudyRecord = (row: RecordApi.CourseOrderVO) => {
+  router.push({
+    path: '/edu/study-record',
+    query: {
+      courseId: row.courseId,
+      courseName: row.courseName,
+      userId: row.userId,
+      userNickname: row.userNickname
+    }
+  })
 }
 
 const handleRefund = async (id: number) => {
@@ -227,7 +356,14 @@ const handleExport = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  initQueryParams()
+  courseList.value = (await CourseApi.getSimpleCourseList())
+    .filter((item) => item.id !== undefined && !!item.name)
+    .map((item) => ({
+      id: item.id!,
+      name: item.name
+    }))
   getList()
 })
 </script>

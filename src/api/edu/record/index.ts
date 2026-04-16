@@ -18,12 +18,23 @@ export interface StudyRecordVO {
 export interface CourseOrderVO {
   id?: number
   no?: string
+  merchantOrderId?: string
+  payOrderId?: number
+  payOrderNo?: string
   userId?: number
   courseId?: number
   price?: number
   payStatus?: boolean
   payTime?: Date
   status?: number
+  statusName?: string
+  refundPrice?: number
+  refundTime?: Date
+  validDays?: number
+  validStartTime?: Date
+  validEndTime?: Date
+  accessStatus?: number | string
+  accessStatusName?: string
   createTime?: Date
   // 冗余字段
   userNickname?: string
