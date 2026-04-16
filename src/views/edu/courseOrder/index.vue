@@ -127,7 +127,7 @@
         <template #default="scope">
           <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
           <el-button
-            v-if="canOpenPayOrder(scope.row)"
+            v-if="hasPayOrderReference(scope.row)"
             link
             type="primary"
             @click="openPayOrder(scope.row)"
@@ -293,7 +293,8 @@ const openDetail = async (row: RecordApi.CourseOrderVO) => {
   }
 }
 
-const canOpenPayOrder = (row: RecordApi.CourseOrderVO) => !!(row.payOrderId || row.merchantOrderId)
+const hasPayOrderReference = (row: RecordApi.CourseOrderVO) =>
+  !!(row.payOrderId || row.merchantOrderId)
 
 const openPayOrder = (row: RecordApi.CourseOrderVO) => {
   if (row.payOrderId) {
@@ -307,7 +308,9 @@ const openPayOrder = (row: RecordApi.CourseOrderVO) => {
         merchantOrderId: row.merchantOrderId
       }
     })
+    return
   }
+  message.warning('该订单暂无可用的支付单信息')
 }
 
 const openStudyRecord = (row: RecordApi.CourseOrderVO) => {
