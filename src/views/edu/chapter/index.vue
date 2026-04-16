@@ -180,6 +180,24 @@ const formatDuration = (seconds: number) => {
   return `${min}:${sec.toString().padStart(2, '0')}`
 }
 
+const createChapterForm = () => ({
+  id: undefined as number | undefined,
+  courseId: courseId.value || 0,
+  name: '',
+  sort: 0
+})
+
+const createSectionForm = () => ({
+  id: undefined as number | undefined,
+  chapterId: 0,
+  courseId: courseId.value || 0,
+  name: '',
+  videoUrl: '',
+  duration: 0,
+  sort: 0,
+  freeFlag: false
+})
+
 const loadChapters = async () => {
   loading.value = true
   try {
@@ -199,7 +217,7 @@ const loadChapters = async () => {
 const chapterDialogVisible = ref(false)
 const chapterDialogTitle = ref('')
 const chapterFormType = ref('')
-const chapterForm = ref({ id: undefined as number | undefined, courseId: courseId.value, name: '', sort: 0 })
+const chapterForm = ref(createChapterForm())
 const chapterFormRules = { name: [{ required: true, message: '章节名称不能为空', trigger: 'blur' }] }
 const chapterFormRef = ref()
 
@@ -208,7 +226,7 @@ const openChapterForm = (type: string, id?: number) => {
   chapterDialogTitle.value = type === 'create' ? '添加章节' : '编辑章节'
   chapterFormType.value = type
   if (type === 'create') {
-    chapterForm.value = { id: undefined, courseId: courseId.value, name: '', sort: 0 }
+    chapterForm.value = createChapterForm()
   } else if (id) {
     const chapter = chapterList.value.find((c) => c.id === id)
     if (chapter) chapterForm.value = { ...chapter }
@@ -244,16 +262,7 @@ const handleDeleteChapter = async (id: number) => {
 const sectionDialogVisible = ref(false)
 const sectionDialogTitle = ref('')
 const sectionFormType = ref('')
-const sectionForm = ref({
-  id: undefined as number | undefined,
-  chapterId: 0,
-  courseId: courseId.value,
-  name: '',
-  videoUrl: '',
-  duration: 0,
-  sort: 0,
-  freeFlag: false
-})
+const sectionForm = ref(createSectionForm())
 const sectionFormRules = { name: [{ required: true, message: '小节名称不能为空', trigger: 'blur' }] }
 const sectionFormRef = ref()
 
@@ -262,16 +271,7 @@ const openSectionForm = (type: string, chapterId: number, sectionId?: number) =>
   sectionDialogTitle.value = type === 'create' ? '添加小节' : '编辑小节'
   sectionFormType.value = type
   if (type === 'create') {
-    sectionForm.value = {
-      id: undefined,
-      chapterId,
-      courseId: courseId.value,
-      name: '',
-      videoUrl: '',
-      duration: 0,
-      sort: 0,
-      freeFlag: false
-    }
+    sectionForm.value = { ...createSectionForm(), chapterId }
   } else if (sectionId) {
     const chapter = chapterList.value.find((c) => c.id === chapterId)
     const section = chapter?.sections?.find((s: any) => s.id === sectionId)
@@ -284,17 +284,8 @@ const syncCourseData = async () => {
   sectionDialogVisible.value = false
   chapterList.value = []
   activeChapters.value = []
-  chapterForm.value = { id: undefined, courseId: courseId.value, name: '', sort: 0 }
-  sectionForm.value = {
-    id: undefined,
-    chapterId: 0,
-    courseId: courseId.value,
-    name: '',
-    videoUrl: '',
-    duration: 0,
-    sort: 0,
-    freeFlag: false
-  }
+  chapterForm.value = createChapterForm()
+  sectionForm.value = createSectionForm()
   if (!courseId.value) {
     courseName.value = ''
     return

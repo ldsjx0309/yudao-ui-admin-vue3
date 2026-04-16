@@ -127,7 +127,7 @@
         <template #default="scope">
           <el-button link type="primary" @click="openDetail(scope.row)">详情</el-button>
           <el-button
-            v-if="hasPayOrderReference(scope.row)"
+            v-if="hasPaymentReference(scope.row)"
             link
             type="primary"
             @click="openPayOrder(scope.row)"
@@ -293,7 +293,7 @@ const openDetail = async (row: RecordApi.CourseOrderVO) => {
   }
 }
 
-const hasPayOrderReference = (row: RecordApi.CourseOrderVO) =>
+const hasPaymentReference = (row: RecordApi.CourseOrderVO) =>
   !!(row.payOrderId || row.merchantOrderId)
 
 const openPayOrder = (row: RecordApi.CourseOrderVO) => {
