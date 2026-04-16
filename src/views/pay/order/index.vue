@@ -223,6 +223,12 @@ const initQueryParams = () => {
   queryParams.no = getQueryValue('no') || undefined
 }
 
+const syncRouteQuery = () => {
+  initQueryParams()
+  queryParams.pageNo = 1
+  getList()
+}
+
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.pageNo = 1
@@ -270,10 +276,16 @@ const openDetail = (id: number) => {
 
 /** 初始化 **/
 onMounted(async () => {
-  initQueryParams()
-  await getList()
   appList.value = await getAppList()
 })
+
+watch(
+  () => route.fullPath,
+  () => {
+    syncRouteQuery()
+  },
+  { immediate: true }
+)
 </script>
 <style>
 .order-font {

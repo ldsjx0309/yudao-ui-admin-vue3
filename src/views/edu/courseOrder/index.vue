@@ -277,6 +277,12 @@ const initQueryParams = () => {
   ) as string | undefined
 }
 
+const syncRouteQuery = () => {
+  initQueryParams()
+  queryParams.pageNo = 1
+  getList()
+}
+
 const openDetail = async (row: RecordApi.CourseOrderVO) => {
   detailVisible.value = true
   detailLoading.value = true
@@ -357,13 +363,19 @@ const handleExport = async () => {
 }
 
 onMounted(async () => {
-  initQueryParams()
   courseList.value = (await CourseApi.getSimpleCourseList())
     .filter((item) => item.id !== undefined && !!item.name)
     .map((item) => ({
       id: item.id!,
       name: item.name
     }))
-  getList()
 })
+
+watch(
+  () => route.fullPath,
+  () => {
+    syncRouteQuery()
+  },
+  { immediate: true }
+)
 </script>

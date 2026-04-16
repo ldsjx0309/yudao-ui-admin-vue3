@@ -148,6 +148,12 @@ const initQueryParams = () => {
   ) as string | undefined
 }
 
+const syncRouteQuery = () => {
+  initQueryParams()
+  queryParams.pageNo = 1
+  getList()
+}
+
 const getList = async () => {
   loading.value = true
   try {
@@ -182,13 +188,19 @@ const handleExport = async () => {
 }
 
 onMounted(async () => {
-  initQueryParams()
   courseList.value = (await CourseApi.getSimpleCourseList())
     .filter((item) => item.id !== undefined && !!item.name)
     .map((item) => ({
       id: item.id!,
       name: item.name
     }))
-  getList()
 })
+
+watch(
+  () => route.fullPath,
+  () => {
+    syncRouteQuery()
+  },
+  { immediate: true }
+)
 </script>
